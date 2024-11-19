@@ -1,0 +1,196 @@
+import json
+import os
+
+class GestorCreditosUNAB:
+    def __init__(self):
+        self.data_file = 'estudiantes.json'
+        if not os.path.exists('data'):
+            os.makedirs('data')
+        if not os.path.exists('data/' + self.data_file):
+            with open('data/' + self.data_file, 'w') as file:
+                json.dump({"estudiantes": []}, file)
+
+    def menu_principal(self):
+        while True:
+            os.system('cls' if os.name == 'nt' else 'clear')
+            print("**********************************************") 
+            print("*                                            *")
+            print("*¡Bienvenidos a Gestor de Créditos de la UNAB!*")
+            print("*                                            *")
+            print("**********************************************")
+            print("\n1. Agregar Estudiante")
+            print("2. Ver Estudiantes")
+            print("3. Editar Estudiante")
+            print("4. Eliminar Estudiante")
+            print("5. Calculadora de Créditos")
+            print("6. Noticias de Colombia")
+            print("7. Registro de Talleres Disponibles")
+            print("8. Ver Semilleros de Investigación")
+            print("9. Ver Calendario")
+            print("10. Salir")
+
+            opcion = input("\nSeleccione una opción: ")
+            if opcion == '1':
+                self.agregar_estudiante()
+            elif opcion == '2':
+                self.ver_estudiantes()
+            elif opcion == '3':
+                self.editar_estudiante()
+            elif opcion == '4':
+                self.eliminar_estudiante()
+            elif opcion == '5':
+                self.calculadora_creditos()
+            elif opcion == '6':
+                self.mostrar_noticias()
+            elif opcion == '7':
+                self.registro_talleres()
+            elif opcion == '8':
+                self.ver_semilleros()
+            elif opcion == '9':
+                self.ver_calendario()
+            elif opcion == '10':
+                break
+            else:
+                input("Opción no válida. Presione Enter para continuar...")
+
+    def cargar_datos(self):
+        with open('data/' + self.data_file, 'r') as file:
+            return json.load(file)
+
+    def guardar_datos(self, data):
+        with open('data/' + self.data_file, 'w') as file:
+            json.dump(data, file, indent=4)
+
+    def agregar_estudiante(self):
+        data = self.cargar_datos()
+        nombre = input("Nombre: ")
+        apellido = input("Apellido: ")
+        codigo = input("Código Estudiantil: ")
+        carrera = input("Carrera: ")
+        semestre = input("Semestre: ")
+        data["estudiantes"].append({
+            "nombre": nombre,
+            "apellido": apellido,
+            "codigo": codigo,
+            "carrera": carrera,
+            "semestre": semestre
+        })
+        self.guardar_datos(data)
+        input("Estudiante agregado. Presione Enter para continuar...")
+
+    def ver_estudiantes(self):
+        data = self.cargar_datos()
+        if not data["estudiantes"]:
+            input("No hay estudiantes registrados. Presione Enter para continuar...")
+            return
+        print("\n--- Estudiantes Registrados ---")
+        for idx, est in enumerate(data["estudiantes"], start=1):
+            print(f"{idx}. {est['nombre']} {est['apellido']} - Código: {est['codigo']} - Carrera: {est['carrera']} - Semestre: {est['semestre']}")
+        input("\nPresione Enter para continuar...")
+
+    def editar_estudiante(self):
+        data = self.cargar_datos()
+        self.ver_estudiantes()
+        try:
+            idx = int(input("Ingrese el número del estudiante que desea editar: ")) - 1
+            if idx < 0 or idx >= len(data["estudiantes"]):
+                raise ValueError
+            estudiante = data["estudiantes"][idx]
+            estudiante["nombre"] = input(f"Nuevo nombre ({estudiante['nombre']}): ") or estudiante["nombre"]
+            estudiante["apellido"] = input(f"Nuevo apellido ({estudiante['apellido']}): ") or estudiante["apellido"]
+            estudiante["codigo"] = input(f"Nuevo código ({estudiante['codigo']}): ") or estudiante["codigo"]
+            estudiante["carrera"] = input(f"Nueva carrera ({estudiante['carrera']}): ") or estudiante["carrera"]
+            estudiante["semestre"] = input(f"Nuevo semestre ({estudiante['semestre']}): ") or estudiante["semestre"]
+            self.guardar_datos(data)
+            input("Estudiante editado. Presione Enter para continuar...")
+        except (ValueError, IndexError):
+            input("Opción no válida. Presione Enter para continuar...")
+
+    def eliminar_estudiante(self):
+        data = self.cargar_datos()
+        self.ver_estudiantes()
+        try:
+            idx = int(input("Ingrese el número del estudiante que desea eliminar: ")) - 1
+            if idx < 0 or idx >= len(data["estudiantes"]):
+                raise ValueError
+            data["estudiantes"].pop(idx)
+            self.guardar_datos(data)
+            input("Estudiante eliminado. Presione Enter para continuar...")
+        except (ValueError, IndexError):
+            input("Opción no válida. Presione Enter para continuar...")
+
+    def calculadora_creditos(self):
+        nombre = input("Ingrese su nombre: ")
+        apellido = input("Ingrese su apellido: ")
+        codigo = input("Ingrese su código estudiantil: ")
+        carrera = input("Ingrese la carrera que está cursando: ")
+        semestre = input("Ingrese el semestre actual: ")
+        valor_semestre = float(input("Ingrese el valor aproximado que paga por semestre: "))
+        total_creditos_carrera = int(input("Ingrese el total de créditos requeridos para su carrera: "))
+        creditos_cursados = int(input("Ingrese el número de créditos que ha cursado hasta ahora: "))
+        creditos_faltantes = total_creditos_carrera - creditos_cursados
+        print(f"Créditos faltantes: {creditos_faltantes}")
+
+        materias_reprobadas = []
+        if input("¿Reprobó alguna materia? (s/n): ").lower() == 's':
+            while True:
+                materia = input("Ingrese el nombre de la materia reprobada (o 'salir' para terminar): ")
+                if materia.lower() == 'salir':
+                    break
+                creditos = int(input(f"Ingrese los créditos de {materia}: "))
+                costo = (valor_semestre / total_creditos_carrera) * creditos
+                materias_reprobadas.append({"materia": materia, "creditos": creditos, "costo": costo})
+
+        print("\n--- Resultados ---")
+        print(f"Nombre: {nombre} {apellido}")
+        print(f"Carrera: {carrera} - Semestre: {semestre}")
+        print(f"Créditos cursados: {creditos_cursados} - Créditos faltantes: {creditos_faltantes}")
+        if materias_reprobadas:
+            print("Materias Reprobadas:")
+            for m in materias_reprobadas:
+                print(f"  - {m['materia']}: {m['creditos']} créditos, Costo: ${m['costo']:.2f}")
+        input("\nPresione Enter para continuar...")
+
+    def mostrar_noticias(self):
+        print("\n--- Noticias de Colombia ---")
+        print("1. Noticia 1: [Colombia perdió contra Uruguay]")
+        print("2. Noticia 2: [Vicky Dávila se postula, el mejor meme de la vida]")
+        print("3. Noticia 3: [¿Le pondrán precio al agua?]")
+        input("\nPresione Enter para continuar...")
+
+    def registro_talleres(self):
+        talleres = ["Futbol", "Ping Pong", "Tenis", "Baloncesto", "Voleibol", "Ajedrez"]
+        print("\n--- Talleres Disponibles ---")
+        for idx, taller in enumerate(talleres, start=1):
+            print(f"{idx}. {taller}")
+        seleccion = input("\nIngrese el número del taller que desea registrar (o 'salir' para volver al menú): ")
+        if seleccion.isdigit() and 1 <= int(seleccion) <= len(talleres):
+            print(f"Taller '{talleres[int(seleccion) - 1]}' registrado con éxito.")
+        elif seleccion.lower() != 'salir':
+            print("Selección no válida.")
+        input("\nPresione Enter para continuar...")
+
+    def ver_semilleros(self):
+        semilleros = {
+            "Ing. Biomédica": 300000,
+            "Ing. Mecatrónica": 400000,
+            "Ing. Mecánica": 350000,
+            "Física": 250000
+        }
+        print("\n--- Semilleros de Investigación ---")
+        for nombre, costo in semilleros.items():
+            print(f"{nombre} - Costo: ${costo}")
+        input("\nPresione Enter para continuar...")
+
+    def ver_calendario(self):
+        print("\n--- Calendario Académico ---")
+        print("1. Enero - Inicio de clases")
+        print("2. Marzo - Exámenes parciales")
+        print("3. Junio - Fin de semestre")
+        print("4. Julio - Inicio de vacaciones")
+        print("5. Septiembre - Exámenes finales")
+        input("\nPresione Enter para continuar...")
+
+if __name__ == "__main__":
+    gestor = GestorCreditosUNAB()
+    gestor.menu_principal()
